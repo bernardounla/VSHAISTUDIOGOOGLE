@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { ScreenType, GalleryPhoto } from '../types';
+import { ScreenType, GalleryPhoto, UserSession } from '../types';
 import { DIRECTOR_INFO, DUBOIS_FAMILY_CHILDREN, GALLERY_PHOTOS } from '../data/initialData';
 
 interface FamilyViewProps {
   onNavigate: (screen: ScreenType) => void;
+  currentUser?: UserSession | null;
+  onLogout?: () => void;
 }
 
-export const FamilyView: React.FC<FamilyViewProps> = ({ onNavigate }) => {
+export const FamilyView: React.FC<FamilyViewProps> = ({ onNavigate, currentUser, onLogout }) => {
   const [selectedChildTab, setSelectedChildTab] = useState<'mathis' | 'lea'>('mathis');
   const [balanceDue, setBalanceDue] = useState<number>(80);
   const [paidAmount, setPaidAmount] = useState<number>(140);
@@ -110,10 +112,12 @@ export const FamilyView: React.FC<FamilyViewProps> = ({ onNavigate }) => {
               <div className="font-extrabold text-base sm:text-lg text-[#191c1e] font-display flex items-center gap-2">
                 <span>Espace Famille Sécurisé</span>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#2ec4b6]/20 text-[#004c46]">
-                  Famille DUBOIS
+                  {currentUser?.name || 'Famille DUBOIS'}
                 </span>
               </div>
-              <p className="text-[11px] text-[#6c7a77]">Dossier n° VSH-26-042 • 2 Enfants Inscrits (Mathis & Léa)</p>
+              <p className="text-[11px] text-[#6c7a77]">
+                Dossier n° {currentUser?.registrationRef || 'VSH-26-042'} • {currentUser?.email || 'famille.dubois@gmail.com'}
+              </p>
             </div>
           </div>
 
@@ -126,13 +130,16 @@ export const FamilyView: React.FC<FamilyViewProps> = ({ onNavigate }) => {
               <span className="hidden sm:inline">Retour</span> Site Public
             </button>
 
-            <button
-              onClick={() => onNavigate('admin')}
-              className="px-3 py-1.5 rounded-lg bg-[#fe6a34]/15 hover:bg-[#fe6a34]/25 text-[#ab3500] text-xs font-semibold flex items-center gap-1 transition-all"
-            >
-              <span className="material-symbols-outlined text-sm">lock</span>
-              <span>Vue Admin</span>
-            </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center gap-1 transition-all border border-rose-200"
+                title="Se déconnecter de l'espace famille"
+              >
+                <span className="material-symbols-outlined text-sm">logout</span>
+                <span className="hidden sm:inline">Déconnexion</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -171,7 +178,7 @@ export const FamilyView: React.FC<FamilyViewProps> = ({ onNavigate }) => {
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#191c1e]">
-                  Bonjour Sophie & Marc
+                  Bonjour {currentUser?.name || 'Sophie & Marc'}
                 </h1>
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
                   <span className="material-symbols-outlined text-xs">verified</span>

@@ -1,5 +1,16 @@
 export type ScreenType = 'site' | 'admin' | 'famille';
 
+export type UserRole = 'admin' | 'parent';
+
+export interface UserSession {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  registrationRef?: string;
+  childNames?: string;
+}
+
 export interface Child {
   id: string;
   firstName: string;

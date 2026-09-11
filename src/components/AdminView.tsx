@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { ScreenType, Registration } from '../types';
+import { ScreenType, Registration, UserSession } from '../types';
 import { DIRECTOR_INFO, CAMEROUN_PROJECT } from '../data/initialData';
 
 interface AdminViewProps {
   onNavigate: (screen: ScreenType) => void;
   registrations: Registration[];
   onUpdateRegistration: (updated: Registration) => void;
+  currentUser?: UserSession | null;
+  onLogout?: () => void;
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({
   onNavigate,
   registrations,
-  onUpdateRegistration
+  onUpdateRegistration,
+  currentUser,
+  onLogout
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -96,11 +100,13 @@ export const AdminView: React.FC<AdminViewProps> = ({
                   SSL 256-bit Sécurisé
                 </span>
               </div>
-              <p className="text-xs text-white/60">Connecté : Christian HAPPI (Directeur de séjour agréé Jeunesse & Sports)</p>
+              <p className="text-xs text-white/60">
+                Connecté : <strong>{currentUser?.name || 'Christian HAPPI'}</strong> (Directeur de séjour)
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs">
             <button
               onClick={() => onNavigate('site')}
               className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 transition-all"
@@ -109,13 +115,16 @@ export const AdminView: React.FC<AdminViewProps> = ({
               <span>Site Public</span>
             </button>
 
-            <button
-              onClick={() => onNavigate('famille')}
-              className="px-3 py-1.5 rounded-lg bg-[#2ec4b6]/20 hover:bg-[#2ec4b6]/30 text-[#70f8e8] flex items-center gap-1.5 transition-all font-semibold"
-            >
-              <span className="material-symbols-outlined text-sm">family_restroom</span>
-              <span>Voir Vue Famille</span>
-            </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 flex items-center gap-1.5 transition-all border border-rose-500/30"
+                title="Se déconnecter de l'espace direction"
+              >
+                <span className="material-symbols-outlined text-sm">logout</span>
+                <span className="hidden sm:inline">Déconnexion</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

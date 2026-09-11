@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
-import { ScreenType, WeekProgram, Activity } from '../types';
+import { ScreenType, WeekProgram, Activity, UserSession, UserRole } from '../types';
 import { DIRECTOR_INFO, INITIAL_WEEKS, INITIAL_ACTIVITIES, CAMEROUN_PROJECT } from '../data/initialData';
 
 interface PublicViewProps {
   onNavigate: (screen: ScreenType) => void;
   onNewRegistration?: (registrationData: any) => void;
+  currentUser?: UserSession | null;
+  onOpenAuthModal?: (role: UserRole) => void;
+  onLogout?: () => void;
 }
 
-export const PublicView: React.FC<PublicViewProps> = ({ onNavigate, onNewRegistration }) => {
+export const PublicView: React.FC<PublicViewProps> = ({
+  onNavigate,
+  onNewRegistration,
+  currentUser,
+  onOpenAuthModal,
+  onLogout,
+}) => {
   // Activity Filter State
   const [activeCategory, setActiveCategory] = useState<string>('Tous');
   const [selectedActivityModal, setSelectedActivityModal] = useState<Activity | null>(null);
@@ -164,23 +173,56 @@ export const PublicView: React.FC<PublicViewProps> = ({ onNavigate, onNewRegistr
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              id="header-nav-famille"
-              onClick={() => onNavigate('famille')}
-              className="px-3 py-2 text-xs sm:text-sm font-medium text-[#006a62] bg-[#2ec4b6]/15 hover:bg-[#2ec4b6]/25 rounded-lg transition-all flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-base">family_restroom</span>
-              <span className="hidden sm:inline">Espace</span> Famille
-            </button>
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <div className="hidden lg:flex flex-col text-right">
+                  <span className="text-xs font-bold text-[#191c1e]">{currentUser.name}</span>
+                  <span className="text-[10px] text-[#006a62] font-semibold">
+                    {currentUser.role === 'admin' ? 'Direction Séjour' : 'Compte Famille'}
+                  </span>
+                </div>
 
-            <button
-              id="header-nav-admin"
-              onClick={() => onNavigate('admin')}
-              className="px-3 py-2 text-xs sm:text-sm font-medium text-[#ab3500] bg-[#fe6a34]/10 hover:bg-[#fe6a34]/20 rounded-lg transition-all flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-base">lock</span>
-              <span className="hidden sm:inline">Espace</span> Admin
-            </button>
+                <button
+                  onClick={() => onNavigate(currentUser.role === 'admin' ? 'admin' : 'famille')}
+                  className="px-3 py-2 text-xs sm:text-sm font-bold text-white bg-[#006a62] hover:bg-[#005049] rounded-lg shadow-xs transition-all flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-base">
+                    {currentUser.role === 'admin' ? 'admin_panel_settings' : 'family_restroom'}
+                  </span>
+                  <span>{currentUser.role === 'admin' ? 'Espace Direction' : 'Mon Espace Famille'}</span>
+                </button>
+
+                {onLogout && (
+                  <button
+                    onClick={onLogout}
+                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-all border border-rose-200/60"
+                    title="Se déconnecter"
+                  >
+                    <span className="material-symbols-outlined text-base">logout</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <button
+                  id="header-nav-famille"
+                  onClick={() => (onOpenAuthModal ? onOpenAuthModal('parent') : onNavigate('famille'))}
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-[#006a62] bg-[#2ec4b6]/15 hover:bg-[#2ec4b6]/25 rounded-lg transition-all flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-base">family_restroom</span>
+                  <span className="hidden sm:inline">Espace</span> Famille
+                </button>
+
+                <button
+                  id="header-nav-admin"
+                  onClick={() => (onOpenAuthModal ? onOpenAuthModal('admin') : onNavigate('admin'))}
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-[#ab3500] bg-[#fe6a34]/10 hover:bg-[#fe6a34]/20 rounded-lg transition-all flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-base">lock</span>
+                  <span className="hidden sm:inline">Espace</span> Admin
+                </button>
+              </>
+            )}
 
             <a
               href="#inscription"
