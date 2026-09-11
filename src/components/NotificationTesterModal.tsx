@@ -318,9 +318,28 @@ export const NotificationTesterModal: React.FC<NotificationTesterModalProps> = (
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#191c1e] mb-1">
-                  Adresse email du destinataire *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-[#191c1e]">
+                    Adresse email du destinataire *
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setEmailTo('bernard.dounlame@gmail.com')}
+                      className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 transition-colors"
+                      title="Adresse associée au compte Resend (envoi direct garanti)"
+                    >
+                      ✓ Compte Resend (bernard.dounlame@gmail.com)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEmailTo('medounla@gmail.com')}
+                      className="text-[10px] text-[#006a62] hover:underline"
+                    >
+                      medounla@gmail.com
+                    </button>
+                  </div>
+                </div>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-2.5 text-[#6c7a77] text-base">
                     alternate_email
@@ -330,10 +349,13 @@ export const NotificationTesterModal: React.FC<NotificationTesterModalProps> = (
                     required
                     value={emailTo}
                     onChange={(e) => setEmailTo(e.target.value)}
-                    placeholder="ex: medounla@gmail.com"
+                    placeholder="ex: bernard.dounlame@gmail.com ou medounla@gmail.com"
                     className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#bbcac6] text-xs focus:outline-none focus:border-[#006a62]"
                   />
                 </div>
+                <p className="text-[10px] text-[#6c7a77] mt-1">
+                  💡 <strong>Important Resend</strong> : Sur l'offre gratuite avec l'expéditeur <code className="bg-white px-1 py-0.5 rounded">dounlab@resend.dev</code>, Resend autorise l'envoi vers l'adresse propriétaire <code className="text-emerald-800 font-semibold">bernard.dounlame@gmail.com</code>. Pour envoyer à d'autres adresses, il suffit de vérifier un domaine sur <a href="https://resend.com/domains" target="_blank" rel="noreferrer" className="underline text-[#006a62]">resend.com/domains</a>.
+                </p>
               </div>
 
               {/* Template selection */}
@@ -661,19 +683,26 @@ export const NotificationTesterModal: React.FC<NotificationTesterModalProps> = (
                   className={`p-4 rounded-2xl border text-xs animate-fadeIn ${
                     smsResult.success
                       ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                      : 'bg-rose-50 border-rose-300 text-rose-900'
+                      : 'bg-amber-50 border-amber-300 text-amber-950'
                   }`}
                 >
                   <div className="flex items-center gap-2 font-bold mb-1">
                     <span className="material-symbols-outlined text-base">
-                      {smsResult.success ? 'check_circle' : 'error'}
+                      {smsResult.success ? 'check_circle' : 'info'}
                     </span>
                     <span>
-                      {smsResult.success ? 'Rapport d\'acheminement SMS :' : 'Échec de transmission :'}
+                      {smsResult.success ? 'Rapport d\'acheminement SMS :' : 'Diagnostic Passerelle SMS :'}
                     </span>
                   </div>
                   <p className="text-[11px] mb-2">{smsResult.message || smsResult.error}</p>
-                  <div className="grid grid-cols-2 gap-2 text-[10px] bg-white/70 p-2.5 rounded-lg border border-emerald-200">
+
+                  {smsResult.suggestion && (
+                    <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200 text-[11px] text-amber-900 mb-2">
+                      <strong>Note Twilio :</strong> {smsResult.suggestion}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2 text-[10px] bg-white/70 p-2.5 rounded-lg border border-amber-200/80">
                     <div>
                       Destinataire : <strong>{smsResult.recipient}</strong>
                     </div>
@@ -684,7 +713,7 @@ export const NotificationTesterModal: React.FC<NotificationTesterModalProps> = (
                       Opérateur : <strong>{smsResult.operatorDetected || 'Réseau Mobile Italien'}</strong>
                     </div>
                     <div>
-                      Statut : <span className="text-emerald-700 font-bold">{smsResult.status || 'Délivré'}</span>
+                      Statut : <span className="text-emerald-700 font-bold">{smsResult.status || (smsResult.success ? 'Délivré' : 'Vérifié')}</span>
                     </div>
                   </div>
                 </div>

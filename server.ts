@@ -162,10 +162,29 @@ app.post('/api/send-sms', async (req, res) => {
             live: true,
             recipient: cleanedNumber,
             destinationCountry,
-            message: `SMS international acheminé avec succès vers ${destinationCountry} !`,
+            message: `SMS international acheminé avec succès vers ${destinationCountry} (Twilio SID: ${twilioData.sid}) !`,
+          });
+        } else {
+          console.warn('Avis passerelle Twilio:', twilioData);
+          return res.json({
+            success: false,
+            provider: 'twilio',
+            live: true,
+            errorCode: twilioData.code,
+            recipient: cleanedNumber,
+            destinationCountry,
+            error: twilioData.message || 'Erreur passerelle Twilio.',
+            suggestion:
+              twilioData.code === 572002 || twilioData.code === 21608
+                ? 'Sur un compte d\'essai Twilio, le numéro destinataire doit être préalablement vérifié dans votre console Twilio (Verified Caller IDs), ou le compte doit être approvisionné.'
+                : twilioData.message,
+            fallbackSimulation: {
+              simulatedId: `sms_sim_${Date.now()}`,
+              status: 'Acheminement simulé avec succès pour test UI',
+            },
           });
         }
-      } catch (smsErr) {
+      } catch (smsErr: any) {
         console.error('Erreur passerelle SMS:', smsErr);
       }
     }
