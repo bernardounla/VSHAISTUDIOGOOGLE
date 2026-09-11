@@ -11,12 +11,14 @@ import { AdminView } from './components/AdminView';
 import { FamilyView } from './components/FamilyView';
 import { ScreenSwitcher } from './components/ScreenSwitcher';
 import { AuthModal } from './components/AuthModal';
+import { NotificationTesterModal } from './components/NotificationTesterModal';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('site');
   const [registrations, setRegistrations] = useState<Registration[]>(INITIAL_REGISTRATIONS);
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isNotificationTesterOpen, setIsNotificationTesterOpen] = useState<boolean>(false);
   const [authModalRole, setAuthModalRole] = useState<UserRole>('parent');
   const [toastNotification, setToastNotification] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
 
@@ -136,6 +138,7 @@ export default function App() {
           onUpdateRegistration={handleUpdateRegistration}
           currentUser={currentUser}
           onLogout={handleLogout}
+          onOpenNotificationTester={() => setIsNotificationTesterOpen(true)}
         />
       )}
 
@@ -147,12 +150,32 @@ export default function App() {
         onOpenAuthModal={handleOpenAuth}
       />
 
+      {/* Persistent Quick Test Button for Resend Email & Italian SMS */}
+      <button
+        onClick={() => setIsNotificationTesterOpen(true)}
+        className="fixed bottom-20 right-4 sm:right-6 z-40 bg-gradient-to-r from-[#006a62] to-[#ab3500] hover:from-[#005049] hover:to-[#832600] text-white px-3.5 py-2 rounded-full shadow-xl border border-white/20 text-xs font-bold flex items-center gap-2 transition-all transform hover:scale-105"
+        title="Tester l'envoi d'emails Resend.com et SMS vers l'Italie (+39)"
+      >
+        <span className="material-symbols-outlined text-sm">mark_email_read</span>
+        <span className="hidden sm:inline">Tester Email Resend & SMS (+39)</span>
+        <span className="sm:hidden">Test Email/SMS</span>
+        <span className="text-xs">🇮🇹</span>
+      </button>
+
       {/* Authentication Modal (Admin & Parent) */}
       <AuthModal
         isOpen={isAuthModalOpen}
         initialRole={authModalRole}
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+      />
+
+      {/* Notifications Tester Modal (Resend.com Email & Italian SMS) */}
+      <NotificationTesterModal
+        isOpen={isNotificationTesterOpen}
+        onClose={() => setIsNotificationTesterOpen(false)}
+        defaultEmail="medounla@gmail.com"
+        defaultPhone="+39 347 891 2345"
       />
     </div>
   );

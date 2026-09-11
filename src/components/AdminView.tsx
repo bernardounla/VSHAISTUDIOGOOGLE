@@ -8,6 +8,7 @@ interface AdminViewProps {
   onUpdateRegistration: (updated: Registration) => void;
   currentUser?: UserSession | null;
   onLogout?: () => void;
+  onOpenNotificationTester?: () => void;
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({
@@ -15,7 +16,8 @@ export const AdminView: React.FC<AdminViewProps> = ({
   registrations,
   onUpdateRegistration,
   currentUser,
-  onLogout
+  onLogout,
+  onOpenNotificationTester
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -150,7 +152,18 @@ export const AdminView: React.FC<AdminViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {onOpenNotificationTester && (
+              <button
+                onClick={onOpenNotificationTester}
+                className="px-4 py-2.5 bg-[#006a62] hover:bg-[#005049] text-white font-bold rounded-xl text-xs shadow-xs transition-all flex items-center gap-1.5"
+                title="Tester l'envoi d'email via Resend.com et SMS vers l'Italie (+39)"
+              >
+                <span className="material-symbols-outlined text-sm">mark_email_read</span>
+                <span>Tester Email Resend & SMS (+39)</span>
+              </button>
+            )}
+
             <button
               onClick={handleBatchReminder}
               className="px-4 py-2.5 bg-[#fe6a34] hover:bg-[#ab3500] text-white font-bold rounded-xl text-xs shadow-xs transition-all flex items-center gap-1.5"
