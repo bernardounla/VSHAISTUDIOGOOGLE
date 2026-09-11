@@ -1,0 +1,7 @@
+{
+  "name": "Vacances Sportives Happy",
+  "description": "Plateforme officielle des séjours d'été sportifs, humains et solidaires de Vacances Sportives Happy à Cosne-Cours-sur-Loire avec espace public, espace famille et espace administration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
