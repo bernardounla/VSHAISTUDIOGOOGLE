@@ -9,6 +9,7 @@ interface AdminViewProps {
   currentUser?: UserSession | null;
   onLogout?: () => void;
   onOpenNotificationTester?: () => void;
+  onOpenSupabaseModal?: () => void;
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({
@@ -17,7 +18,8 @@ export const AdminView: React.FC<AdminViewProps> = ({
   onUpdateRegistration,
   currentUser,
   onLogout,
-  onOpenNotificationTester
+  onOpenNotificationTester,
+  onOpenSupabaseModal,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -153,6 +155,17 @@ export const AdminView: React.FC<AdminViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {onOpenSupabaseModal && (
+              <button
+                onClick={onOpenSupabaseModal}
+                className="px-3.5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-xs transition-all flex items-center gap-1.5"
+                title="Gérer la base de données PostgreSQL Supabase & Authentification"
+              >
+                <span className="material-symbols-outlined text-sm">database</span>
+                <span>Base Supabase</span>
+              </button>
+            )}
+
             {onOpenNotificationTester && (
               <button
                 onClick={onOpenNotificationTester}

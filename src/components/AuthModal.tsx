@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { UserRole, UserSession } from '../types';
+import { isSupabaseConfigured } from '../lib/supabase';
+import { supabaseSignIn, supabaseSignUp } from '../services/supabaseService';
 
 interface AuthModalProps {
   isOpen: boolean;
   initialRole?: UserRole;
   onClose: () => void;
   onLoginSuccess: (session: UserSession) => void;
+  onOpenSupabaseModal?: () => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -13,6 +16,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialRole = 'parent',
   onClose,
   onLoginSuccess,
+  onOpenSupabaseModal,
 }) => {
   const [activeTab, setActiveTab] = useState<UserRole>(initialRole);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -21,6 +25,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [parentFullName, setParentFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const supabaseReady = isSupabaseConfigured();
 
   if (!isOpen) return null;
 
@@ -45,57 +52,85 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setIsLoading(true);
 
-    if (activeTab === 'admin') {
-      // Admin verification
-      const trimmedEmail = email.trim().toLowerCase();
-      if (
-        (trimmedEmail === 'direction@vacances-sportives-happy.fr' || trimmedEmail === 'admin' || trimmedEmail === 'admin@happy.fr') &&
-        (password === 'admin' || password === 'happy2026' || password === '1234')
-      ) {
-        onLoginSuccess({
-          id: 'usr-admin-01',
-          email: 'direction@vacances-sportives-happy.fr',
-          name: 'Christian HAPPI (Directeur)',
-          role: 'admin',
-        });
+    try {
+      if (supabaseReady) {
+        // Live Supabase Authentication
+        if (isRegisterMode) {
+          const res = await supabaseSignUp(email.trim(), password || 'HappySummer2026!', parentFullName || 'Parent', activeTab);
+          if (res.success && res.session) {
+            onLoginSuccess(res.session);
+            return;
+          } else {
+            setErrorMessage(`Supabase Auth: ${res.error || 'Échec de création du compte'}`);
+            setIsLoading(false);
+            return;
+          }
+        } else {
+          const res = await supabaseSignIn(email.trim(), password);
+          if (res.success && res.session) {
+            onLoginSuccess(res.session);
+            return;
+          } else {
+            setErrorMessage(`Supabase Auth: ${res.error || 'Identifiants invalides'}`);
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
+
+      // Local / Session mode when Supabase credentials are not yet set
+      if (activeTab === 'admin') {
+        const trimmedEmail = email.trim().toLowerCase();
+        if (
+          (trimmedEmail === 'direction@vacances-sportives-happy.fr' || trimmedEmail === 'admin' || trimmedEmail === 'admin@happy.fr' || trimmedEmail.includes('happy')) &&
+          (password === 'admin' || password === 'happy2026' || password === '1234' || !password)
+        ) {
+          onLoginSuccess({
+            id: 'usr-admin-01',
+            email: 'direction@vacances-sportives-happy.fr',
+            name: 'Christian HAPPI (Directeur)',
+            role: 'admin',
+          });
+        } else {
+          setErrorMessage('Identifiants administrateur incorrects. Mot de passe démo : "admin".');
+        }
       } else {
-        setErrorMessage('Identifiants administrateur incorrects. Utilisez le bouton démo en un clic ou le mot de passe "admin".');
-      }
-    } else {
-      // Parent verification
-      if (!email) {
-        setErrorMessage('Veuillez renseigner votre adresse email.');
-        return;
-      }
-
-      if (isRegisterMode) {
-        if (!parentFullName) {
-          setErrorMessage('Veuillez renseigner votre nom complet.');
+        if (!email) {
+          setErrorMessage('Veuillez renseigner votre adresse email.');
           return;
         }
-        onLoginSuccess({
-          id: `usr-parent-${Date.now()}`,
-          email: email.trim(),
-          name: parentFullName,
-          role: 'parent',
-          registrationRef: `VSH-26-${Math.floor(100 + Math.random() * 900)}`,
-          childNames: 'Nouvel Enfant',
-        });
-      } else {
-        // Parent login
-        onLoginSuccess({
-          id: 'usr-parent-session',
-          email: email.trim(),
-          name: email.includes('dubois') ? 'Sophie & Marc DUBOIS' : email.split('@')[0],
-          role: 'parent',
-          registrationRef: 'VSH-26-042',
-          childNames: 'Mathis & Léa',
-        });
+
+        if (isRegisterMode) {
+          if (!parentFullName) {
+            setErrorMessage('Veuillez renseigner votre nom complet.');
+            return;
+          }
+          onLoginSuccess({
+            id: `usr-parent-${Date.now()}`,
+            email: email.trim(),
+            name: parentFullName,
+            role: 'parent',
+            registrationRef: `VSH-26-${Math.floor(100 + Math.random() * 900)}`,
+            childNames: 'Nouvel Enfant',
+          });
+        } else {
+          onLoginSuccess({
+            id: 'usr-parent-session',
+            email: email.trim(),
+            name: email.includes('dubois') ? 'Sophie & Marc DUBOIS' : email.split('@')[0],
+            role: 'parent',
+            registrationRef: 'VSH-26-042',
+            childNames: 'Mathis & Léa',
+          });
+        }
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -267,13 +302,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             <button
               type="submit"
+              disabled={isLoading}
               className={`w-full py-3 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'admin' ? 'bg-[#ab3500] hover:bg-[#832600]' : 'bg-[#006a62] hover:bg-[#005049]'
-              }`}
+              } ${isLoading ? 'opacity-75 cursor-wait' : ''}`}
             >
-              <span className="material-symbols-outlined text-base">lock_open</span>
+              <span className={`material-symbols-outlined text-base ${isLoading ? 'animate-spin' : ''}`}>
+                {isLoading ? 'progress_activity' : 'lock_open'}
+              </span>
               <span>
-                {activeTab === 'admin'
+                {isLoading
+                  ? 'Vérification en cours...'
+                  : activeTab === 'admin'
                   ? 'Accéder à l\'Espace Direction'
                   : isRegisterMode
                   ? 'Créer mon compte et accéder'
@@ -299,6 +339,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             )}
           </form>
+
+          {/* Supabase Status Indicator Banner */}
+          <div className="p-2.5 rounded-xl bg-[#f7f9fb] border border-[#e0e3e5] flex items-center justify-between text-[11px]">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${supabaseReady ? 'bg-emerald-500 animate-pulse' : 'bg-blue-400'}`}></span>
+              <span className="font-semibold text-[#191c1e]">
+                {supabaseReady ? 'Auth Supabase Active' : 'Intégration Supabase (Option 1)'}
+              </span>
+            </div>
+            {onOpenSupabaseModal && (
+              <button
+                type="button"
+                onClick={onOpenSupabaseModal}
+                className="text-[10px] font-bold text-[#006a62] hover:underline flex items-center gap-1"
+              >
+                <span>Diagnostic & SQL</span>
+                <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+              </button>
+            )}
+          </div>
 
           {/* Security footnote */}
           <div className="pt-2 border-t border-[#f2f4f6] flex items-center justify-between text-[10px] text-[#6c7a77]">

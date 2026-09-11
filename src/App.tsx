@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ScreenType, Registration, UserSession, UserRole } from './types';
 import { INITIAL_REGISTRATIONS } from './data/initialData';
 import { PublicView } from './components/PublicView';
@@ -12,6 +12,8 @@ import { FamilyView } from './components/FamilyView';
 import { ScreenSwitcher } from './components/ScreenSwitcher';
 import { AuthModal } from './components/AuthModal';
 import { NotificationTesterModal } from './components/NotificationTesterModal';
+import { SupabaseStatusModal } from './components/SupabaseStatusModal';
+import { fetchRegistrationsFromSupabase, saveRegistrationToSupabase } from './services/supabaseService';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('site');
@@ -19,8 +21,18 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isNotificationTesterOpen, setIsNotificationTesterOpen] = useState<boolean>(false);
+  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState<boolean>(false);
   const [authModalRole, setAuthModalRole] = useState<UserRole>('parent');
   const [toastNotification, setToastNotification] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+
+  // Load inscriptions from Supabase on mount
+  useEffect(() => {
+    fetchRegistrationsFromSupabase().then((data) => {
+      if (data && data.length > 0) {
+        setRegistrations(data);
+      }
+    });
+  }, []);
 
   const showToast = (message: string, type: 'success' | 'info' = 'success') => {
     setToastNotification({ message, type });
@@ -74,6 +86,11 @@ export default function App() {
 
   const handleNewRegistration = (newReg: Registration) => {
     setRegistrations((prev) => [newReg, ...prev]);
+    // Save to Supabase (cloud sync)
+    saveRegistrationToSupabase(newReg).catch((err) =>
+      console.warn('Sync Supabase inscription échouée:', err)
+    );
+
     // Auto-create and log in as this new parent session
     const newSession: UserSession = {
       id: `usr-parent-${Date.now()}`,
@@ -91,6 +108,10 @@ export default function App() {
   const handleUpdateRegistration = (updated: Registration) => {
     setRegistrations((prev) =>
       prev.map((r) => (r.id === updated.id ? updated : r))
+    );
+    // Sync update with Supabase
+    saveRegistrationToSupabase(updated).catch((err) =>
+      console.warn('Sync Supabase mise à jour échouée:', err)
     );
   };
 
@@ -139,6 +160,7 @@ export default function App() {
           currentUser={currentUser}
           onLogout={handleLogout}
           onOpenNotificationTester={() => setIsNotificationTesterOpen(true)}
+          onOpenSupabaseModal={() => setIsSupabaseModalOpen(true)}
         />
       )}
 
@@ -162,12 +184,13 @@ export default function App() {
         <span className="text-xs">🇮🇹</span>
       </button>
 
-      {/* Authentication Modal (Admin & Parent) */}
+      {/* Authentication Modal (Admin & Parent with Supabase Auth) */}
       <AuthModal
         isOpen={isAuthModalOpen}
         initialRole={authModalRole}
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+        onOpenSupabaseModal={() => setIsSupabaseModalOpen(true)}
       />
 
       {/* Notifications Tester Modal (Resend.com Email & Italian SMS) */}
@@ -176,6 +199,12 @@ export default function App() {
         onClose={() => setIsNotificationTesterOpen(false)}
         defaultEmail="medounla@gmail.com"
         defaultPhone="+39 347 891 2345"
+      />
+
+      {/* Supabase Status & Database SQL Schema Modal */}
+      <SupabaseStatusModal
+        isOpen={isSupabaseModalOpen}
+        onClose={() => setIsSupabaseModalOpen(false)}
       />
     </div>
   );
